@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Community Health System{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white border-0">
+                <div class="card-body py-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-1">Welcome back, {{ current_user.get_full_name() }}!</h3>
+                            <p class="mb-0 opacity-75">
+                                <i class="fas fa-user-tag me-2"></i>{{ current_user.role.title() }}
+                                {% if current_user.facility_name %}
+                                    <span class="mx-2">|</span>
+                                    <i class="fas fa-hospital me-2"></i>{{ current_user.facility_name }}
+                                {% endif %}
+                                {% if current_user.county %}
+                                    <span class="mx-2">|</span>
+                                    <i class="fas fa-map-marker-alt me-2"></i>{{ current_user.county.title() }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="text-white opacity-75">
+                                <small>Last login: {{ current_user.last_login.strftime('%d %b %Y, %I:%M %p') if current_user.last_login else 'First time' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        {% if current_user.role == 'admin' %}
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle p-3">
+                                    <i class="fas fa-users fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Total Users</h6>
+                                <h4 class="mb-0">{{ stats.total_users or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle p-3">
+                                    <i class="fas fa-user-injured fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Total Patients</h6>
+                                <h4 class="mb-0">{{ stats.total_patients or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-info text-white rounded-circle p-3">
+                                    <i class="fas fa-calendar-alt fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Outreach Events</h6>
+                                <h4 class="mb-0">{{ stats.total_events or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-warning text-white rounded-circle p-3">
+                                    <i class="fas fa-money-bill-wave fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Pending Payments</h6>
+                                <h4 class="mb-0">{{ stats.pending_payments or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% elif current_user.role == 'doctor' %}
+            <div class="col-xl-6 col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle p-3">
+                                    <i class="fas fa-user-injured fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">My Patients</h6>
+                                <h4 class="mb-0">{{ stats.my_patients or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-6 col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle p-3">
+                                    <i class="fas fa-stethoscope fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Recent Consultations</h6>
+                                <h4 class="mb-0">{{ stats.recent_consultations or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% elif current_user.role == 'chw' %}
+            <div class="col-xl-4 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle p-3">
+                                    <i class="fas fa-users fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">My Patients</h6>
+                                <h4 class="mb-0">{{ stats.my_patients or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle p-3">
+                                    <i class="fas fa-calendar-alt fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">My Events</h6>
+                                <h4 class="mb-0">{{ stats.my_events or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-warning text-white rounded-circle p-3">
+                                    <i class="fas fa-money-bill-wave fa-lg"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted mb-1">Pending Allowances</h6>
+                                <h4 class="mb-0">{{ stats.pending_allowances or 0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% if current_user.can_manage_patients() %}
+                        <div class="col-md-3">
+                            <a href="{{ url_for('new_patient') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="fas fa-user-plus fa-lg d-block mb-2"></i>
+                                Register Patient
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-3">
+                            <a href="{{ url_for('new_outreach') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-calendar-plus fa-lg d-block mb-2"></i>
+                                Plan Outreach
+                            </a>
+                        </div>
+
+                        <div class="col-md-3">
+                            <a href="{{ url_for('new_payment') }}" class="btn btn-outline-warning w-100 py-3">
+                                <i class="fas fa-credit-card fa-lg d-block mb-2"></i>
+                                Process Payment
+                            </a>
+                        </div>
+
+                        {% if current_user.can_manage_patients() %}
+                        <div class="col-md-3">
+                            <a href="{{ url_for('patients') }}" class="btn btn-outline-info w-100 py-3">
+                                <i class="fas fa-search fa-lg d-block mb-2"></i>
+                                Find Patient
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities and Upcoming Events -->
+    <div class="row">
+        <!-- Upcoming Outreach Events -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Outreach Events</h6>
+                    <a href="{{ url_for('outreach') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_events %}
+                        {% for event in recent_events %}
+                        <div class="d-flex align-items-center mb-3 {% if not loop.last %}border-bottom pb-3{% endif %}">
+                            <div class="flex-shrink-0">
+                                <div class="bg-light rounded-circle p-2 text-center" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                    <small class="fw-bold text-primary">
+                                        {{ event.start_date.strftime('%d') }}<br>
+                                        <span style="font-size: 0.7em;">{{ event.start_date.strftime('%b') }}</span>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <p class="text-muted mb-1 small">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ event.location }}
+                                </p>
+                                <span class="badge bg-{{ 'success' if event.event_type == 'vaccination' else 'primary' if event.event_type == 'screening' else 'info' }}">
+                                    {{ event.event_type.replace('_', ' ').title() }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-calendar-times fa-2x mb-3"></i>
+                            <p class="mb-0">No upcoming events scheduled</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- System Overview -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>System Overview</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="fas fa-heartbeat text-danger fa-2x mb-2"></i>
+                                <h6 class="mb-1">FHIR Compliant</h6>
+                                <small class="text-muted">Healthcare data standards</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="fas fa-mobile-alt text-success fa-2x mb-2"></i>
+                                <h6 class="mb-1">M-Pesa Ready</h6>
+                                <small class="text-muted">IntaSend integration</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="fas fa-shield-alt text-primary fa-2x mb-2"></i>
+                                <h6 class="mb-1">Secure Access</h6>
+                                <small class="text-muted">Role-based permissions</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="fas fa-globe-africa text-warning fa-2x mb-2"></i>
+                                <h6 class="mb-1">Kenya-wide</h6>
+                                <small class="text-muted">All 47 counties</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Add any dashboard-specific JavaScript here
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh stats every 5 minutes
+    setTimeout(function() {
+        window.location.reload();
+    }, 300000);
+});
+</script>
+{% endblock %}

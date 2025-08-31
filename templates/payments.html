@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Payments - Community Health System{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-money-bill-wave me-2"></i>Payment Management</h2>
+            <p class="text-muted">Track payments, fees, and CHW allowances through IntaSend</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('new_payment') }}" class="btn btn-warning">
+                <i class="fas fa-credit-card me-2"></i>Process Payment
+            </a>
+        </div>
+    </div>
+
+    <!-- Payment Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">Completed Payments</h6>
+                    <h4 class="text-success mb-0">{{ payments.items | selectattr('status', 'equalto', 'completed') | list | length }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">Pending Payments</h6>
+                    <h4 class="text-warning mb-0">{{ payments.items | selectattr('status', 'equalto', 'pending') | list | length }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-danger mb-2">
+                        <i class="fas fa-times-circle fa-2x"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">Failed Payments</h6>
+                    <h4 class="text-danger mb-0">{{ payments.items | selectattr('status', 'equalto', 'failed') | list | length }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="fas fa-mobile-alt fa-2x"></i>
+                    </div>
+                    <h6 class="text-muted mb-1">M-Pesa Payments</h6>
+                    <h4 class="text-primary mb-0">{{ payments.items | selectattr('payment_method', 'equalto', 'mpesa') | list | length }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Payment Type</label>
+                            <select class="form-select" name="type">
+                                <option value="all" {{ 'selected' if payment_type == 'all' else '' }}>All Types</option>
+                                <option value="consultation_fee" {{ 'selected' if payment_type == 'consultation_fee' else '' }}>Consultation Fees</option>
+                                <option value="treatment_fee" {{ 'selected' if payment_type == 'treatment_fee' else '' }}>Treatment Fees</option>
+                                <option value="medication_fee" {{ 'selected' if payment_type == 'medication_fee' else '' }}>Medication Fees</option>
+                                <option value="screening_fee" {{ 'selected' if payment_type == 'screening_fee' else '' }}>Screening Fees</option>
+                                <option value="chw_allowance" {{ 'selected' if payment_type == 'chw_allowance' else '' }}>CHW Allowances</option>
+                                <option value="other" {{ 'selected' if payment_type == 'other' else '' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="all" {{ 'selected' if status_filter == 'all' else '' }}>All Status</option>
+                                <option value="pending" {{ 'selected' if status_filter == 'pending' else '' }}>Pending</option>
+                                <option value="completed" {{ 'selected' if status_filter == 'completed' else '' }}>Completed</option>
+                                <option value="failed" {{ 'selected' if status_filter == 'failed' else '' }}>Failed</option>
+                                <option value="refunded" {{ 'selected' if status_filter == 'refunded' else '' }}>Refunded</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-2"></i>Apply Filters
+                            </button>
+                            <a href="{{ url_for('payments') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Clear
+                            </a>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="{{ url_for('new_payment') }}" class="btn btn-success w-100">
+                                <i class="fas fa-plus me-1"></i>New Payment
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        Payment Transactions 
+                        <span class="badge bg-primary ms-2">{{ payments.total }} total</span>
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if payments.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Patient/Recipient</th>
+                                    <th>Payment Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments.items %}
+                                <tr>
+                                    <td>
+                                        <div class="font-monospace">
+                                            <strong>{{ payment.payment_reference }}</strong>
+                                        </div>
+                                        {% if payment.intasend_ref %}
+                                        <small class="text-muted">IntaSend: {{ payment.intasend_ref }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-success">
+                                            KES {{ "%.2f"|format(payment.amount) }}
+                                        </div>
+                                        <small class="text-muted">{{ payment.currency }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'info' if payment.payment_type == 'consultation_fee' else 'primary' if payment.payment_type == 'treatment_fee' else 'success' if payment.payment_type == 'chw_allowance' else 'warning' }}">
+                                            {{ payment.payment_type.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if payment.patient %}
+                                        <div class="fw-bold">{{ payment.patient.get_full_name() }}</div>
+                                        <small class="text-muted">{{ payment.patient.patient_number }}</small>
+                                        {% elif payment.received_by_id %}
+                                        <div class="fw-bold">{{ payment.receiver.get_full_name() }}</div>
+                                        <small class="text-muted">{{ payment.receiver.role.title() }}</small>
+                                        {% else %}
+                                        <small class="text-muted">Not specified</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if payment.payment_method %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-{{ 'mobile-alt' if payment.payment_method == 'mpesa' else 'credit-card' if payment.payment_method == 'card' else 'university' }} me-2 text-{{ 'success' if payment.payment_method == 'mpesa' else 'primary' }}"></i>
+                                            <span>{{ payment.payment_method.replace('_', ' ').title() }}</span>
+                                        </div>
+                                        {% if payment.phone_number %}
+                                        <small class="text-muted">{{ payment.phone_number }}</small>
+                                        {% endif %}
+                                        {% else %}
+                                        <small class="text-muted">Not specified</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' else 'danger' if payment.status == 'failed' else 'info' }}">
+                                            <i class="fas fa-{{ 'check' if payment.status == 'completed' else 'clock' if payment.status == 'pending' else 'times' if payment.status == 'failed' else 'info-circle' }} me-1"></i>
+                                            {{ payment.status.title() }}
+                                        </span>
+                                        {% if payment.intasend_status and payment.intasend_status != payment.status %}
+                                        <br><small class="text-muted">IntaSend: {{ payment.intasend_status.title() }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">{{ payment.created_at.strftime('%d %b %Y') }}</div>
+                                        <small class="text-muted">{{ payment.created_at.strftime('%I:%M %p') }}</small>
+                                        {% if payment.completed_at %}
+                                        <br><small class="text-success">Completed: {{ payment.completed_at.strftime('%d %b, %I:%M %p') }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical btn-group-sm">
+                                            {% if payment.status == 'pending' and payment.intasend_checkout_id %}
+                                            <a href="{{ payment.intasend_checkout_id }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-external-link-alt me-1"></i>Pay
+                                            </a>
+                                            {% endif %}
+                                            <button class="btn btn-outline-info btn-sm" onclick="viewPaymentDetails('{{ payment.id }}')">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No payments found</h5>
+                        {% if payment_type != 'all' or status_filter != 'all' %}
+                        <p class="text-muted">No payments match your filter criteria.</p>
+                        <a href="{{ url_for('payments') }}" class="btn btn-outline-primary">View All Payments</a>
+                        {% else %}
+                        <p class="text-muted">Start by processing your first payment.</p>
+                        <a href="{{ url_for('new_payment') }}" class="btn btn-warning">
+                            <i class="fas fa-credit-card me-2"></i>Process First Payment
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if payments.pages > 1 %}
+                <div class="card-footer bg-white">
+                    <nav aria-label="Payments pagination">
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            {% if payments.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('payments', page=payments.prev_num, type=payment_type, status=status_filter) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in payments.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != payments.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('payments', page=page_num, type=payment_type, status=status_filter) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if payments.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('payments', page=payments.next_num, type=payment_type, status=status_filter) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div class="modal fade" id="paymentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="paymentDetailsContent">
+                <!-- Payment details will be loaded here -->
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function viewPaymentDetails(paymentId) {
+    const modal = new bootstrap.Modal(document.getElementById('paymentDetailsModal'));
+    const content = document.getElementById('paymentDetailsContent');
+    
+    // Show loading spinner
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // In a real implementation, you would fetch payment details from the server
+    // For now, we'll simulate the payment details view
+    setTimeout(() => {
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Payment Information</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Reference:</strong></td><td class="font-monospace">Payment-${paymentId}</td></tr>
+                        <tr><td><strong>Status:</strong></td><td><span class="badge bg-success">Completed</span></td></tr>
+                        <tr><td><strong>Amount:</strong></td><td><strong>KES 500.00</strong></td></tr>
+                        <tr><td><strong>Method:</strong></td><td>M-Pesa</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary">Transaction Details</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>IntaSend Ref:</strong></td><td class="font-monospace">IS_${paymentId}_${Date.now()}</td></tr>
+                        <tr><td><strong>Phone:</strong></td><td>+254712345678</td></tr>
+                        <tr><td><strong>Created:</strong></td><td>${new Date().toLocaleDateString()}</td></tr>
+                        <tr><td><strong>Completed:</strong></td><td>${new Date().toLocaleDateString()}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="text-primary">Description</h6>
+                    <p class="text-muted">Consultation fee payment for patient services.</p>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Auto-refresh pending payments every 30 seconds
+setInterval(function() {
+    const pendingPayments = document.querySelectorAll('.badge:contains("Pending")');
+    if (pendingPayments.length > 0) {
+        // In a real implementation, you would make an AJAX call to check payment status
+        console.log('Checking payment status updates...');
+    }
+}, 30000);
+
+// Format numbers with proper currency formatting
+document.addEventListener('DOMContentLoaded', function() {
+    const amounts = document.querySelectorAll('.text-success');
+    amounts.forEach(amount => {
+        if (amount.textContent.includes('KES')) {
+            const number = parseFloat(amount.textContent.replace('KES ', ''));
+            if (!isNaN(number)) {
+                amount.textContent = `KES ${number.toLocaleString('en-KE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

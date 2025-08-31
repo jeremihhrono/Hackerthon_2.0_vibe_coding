@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Outreach Events - Community Health System{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-calendar-alt me-2"></i>Community Outreach</h2>
+            <p class="text-muted">Plan and manage community health outreach events</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('new_outreach') }}" class="btn btn-success">
+                <i class="fas fa-calendar-plus me-2"></i>Plan New Event
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Filter by Status</label>
+                            <select class="form-select" onchange="filterEvents(this.value)">
+                                <option value="all" {{ 'selected' if status_filter == 'all' else '' }}>All Events</option>
+                                <option value="planned" {{ 'selected' if status_filter == 'planned' else '' }}>Planned</option>
+                                <option value="ongoing" {{ 'selected' if status_filter == 'ongoing' else '' }}>Ongoing</option>
+                                <option value="completed" {{ 'selected' if status_filter == 'completed' else '' }}>Completed</option>
+                                <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' else '' }}>Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <i class="fas fa-syringe text-primary"></i>
+                                        <small class="d-block">Vaccinations</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <i class="fas fa-stethoscope text-success"></i>
+                                        <small class="d-block">Screenings</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <i class="fas fa-graduation-cap text-info"></i>
+                                        <small class="d-block">Education</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <i class="fas fa-baby text-warning"></i>
+                                        <small class="d-block">Maternal</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('new_outreach') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus me-2"></i>Quick Plan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="row">
+        <div class="col-12">
+            {% if events.items %}
+                {% for event in events.items %}
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="bg-light rounded p-3 text-center" style="min-width: 70px;">
+                                            <div class="text-primary fw-bold">
+                                                {{ event.start_date.strftime('%d') }}
+                                            </div>
+                                            <small class="text-muted">{{ event.start_date.strftime('%b %Y') }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">
+                                            <a href="{{ url_for('outreach_detail', id=event.id) }}" class="text-decoration-none">
+                                                {{ event.title }}
+                                            </a>
+                                        </h5>
+                                        <p class="text-muted mb-2">{{ event.description or 'No description provided' }}</p>
+                                        
+                                        <div class="d-flex flex-wrap gap-2 mb-2">
+                                            <span class="badge bg-{{ 'success' if event.event_type == 'vaccination' else 'primary' if event.event_type == 'screening' else 'info' if event.event_type == 'education' else 'warning' }}">
+                                                {{ event.event_type.replace('_', ' ').title() }}
+                                            </span>
+                                            <span class="badge bg-{{ 'success' if event.status == 'completed' else 'warning' if event.status == 'ongoing' else 'secondary' if event.status == 'planned' else 'danger' }}">
+                                                {{ event.status.title() }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="row g-2 text-muted small">
+                                            <div class="col-md-6">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ event.start_date.strftime('%d %b %Y, %I:%M %p') }}
+                                                {% if event.end_date != event.start_date %}
+                                                - {{ event.end_date.strftime('%d %b %Y, %I:%M %p') }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                {{ event.location }}
+                                                {% if event.target_county %}
+                                                , {{ event.target_county.title() }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        {% if event.max_participants %}
+                                        <div class="mt-2">
+                                            <div class="progress" style="height: 6px;">
+                                                {% set attendance_percentage = (event.get_attendance_count() / event.max_participants * 100) if event.max_participants else 0 %}
+                                                <div class="progress-bar bg-{{ 'success' if attendance_percentage >= 100 else 'warning' if attendance_percentage >= 80 else 'info' }}" 
+                                                     style="width: {{ min(attendance_percentage, 100) }}%"></div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ event.get_attendance_count() }}/{{ event.max_participants }} participants
+                                                {% if event.is_full() %}
+                                                <span class="text-success fw-bold">(Full)</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 text-md-end">
+                                <div class="btn-group-vertical" role="group">
+                                    <a href="{{ url_for('outreach_detail', id=event.id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                    {% if current_user.role == 'admin' or event.organizer_id == current_user.id %}
+                                    <a href="#" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-edit me-1"></i>Edit Event
+                                    </a>
+                                    {% endif %}
+                                    {% if event.status == 'planned' and not event.is_full() %}
+                                    <button class="btn btn-outline-success btn-sm" onclick="recordAttendance({{ event.id }})">
+                                        <i class="fas fa-user-plus me-1"></i>Record Attendance
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if events.pages > 1 %}
+                <nav aria-label="Events pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if events.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('outreach', page=events.prev_num, status=status_filter) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in events.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != events.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('outreach', page=page_num, status=status_filter) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if events.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('outreach', page=events.next_num, status=status_filter) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-4"></i>
+                <h4 class="text-muted">No outreach events found</h4>
+                {% if status_filter != 'all' %}
+                <p class="text-muted">No events match the selected status filter.</p>
+                <a href="{{ url_for('outreach', status='all') }}" class="btn btn-outline-primary">View All Events</a>
+                {% else %}
+                <p class="text-muted">Start planning your first community outreach event.</p>
+                <a href="{{ url_for('new_outreach') }}" class="btn btn-success">
+                    <i class="fas fa-calendar-plus me-2"></i>Plan Your First Event
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Attendance Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Patient Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceForm">
+                    <input type="hidden" id="eventId" name="event_id">
+                    <div class="mb-3">
+                        <label class="form-label">Search Patient</label>
+                        <input type="text" class="form-control" id="patientSearch" placeholder="Type patient name or number...">
+                        <div id="patientSuggestions" class="list-group mt-2" style="display: none;"></div>
+                        <input type="hidden" id="selectedPatientId" name="patient_id">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Services Received</label>
+                        <textarea class="form-control" name="services" rows="2" placeholder="e.g., Vaccination, Health screening..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2" placeholder="Additional notes..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitAttendance()">Record Attendance</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterEvents(status) {
+    window.location.href = `{{ url_for('outreach') }}?status=${status}`;
+}
+
+function recordAttendance(eventId) {
+    document.getElementById('eventId').value = eventId;
+    new bootstrap.Modal(document.getElementById('attendanceModal')).show();
+}
+
+// Patient search functionality
+document.getElementById('patientSearch').addEventListener('input', function() {
+    const query = this.value.trim();
+    if (query.length >= 2) {
+        fetch(`{{ url_for('api_patients_search') }}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(patients => {
+                const suggestions = document.getElementById('patientSuggestions');
+                suggestions.innerHTML = '';
+                
+                if (patients.length > 0) {
+                    patients.forEach(patient => {
+                        const item = document.createElement('button');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">${patient.name}</h6>
+                                    <small>${patient.patient_number} - Age: ${patient.age}</small>
+                                </div>
+                            </div>
+                        `;
+                        item.onclick = function() {
+                            document.getElementById('patientSearch').value = patient.name;
+                            document.getElementById('selectedPatientId').value = patient.id;
+                            suggestions.style.display = 'none';
+                        };
+                        suggestions.appendChild(item);
+                    });
+                    suggestions.style.display = 'block';
+                } else {
+                    suggestions.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error searching patients:', error);
+            });
+    } else {
+        document.getElementById('patientSuggestions').style.display = 'none';
+    }
+});
+
+function submitAttendance() {
+    const form = document.getElementById('attendanceForm');
+    const formData = new FormData(form);
+    
+    if (!formData.get('patient_id')) {
+        alert('Please select a patient');
+        return;
+    }
+    
+    // Convert FormData to URLSearchParams for form submission
+    const data = new URLSearchParams();
+    for (let [key, value] of formData.entries()) {
+        data.append(key, value);
+    }
+    
+    fetch(`{{ url_for('record_attendance', id=0) }}`.replace('0', formData.get('event_id')), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: data
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error recording attendance');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error recording attendance');
+    });
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('#patientSearch') && !event.target.closest('#patientSuggestions')) {
+        document.getElementById('patientSuggestions').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

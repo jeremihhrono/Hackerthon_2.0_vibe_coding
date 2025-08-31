@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Community Health System{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Healthcare Worker Registration
+                    </h4>
+                    <p class="mb-0 mt-2 opacity-75">Join Kenya's community health network</p>
+                </div>
+                
+                <div class="card-body p-5">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.first_name.label(class="form-label fw-bold") }}
+                                {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.last_name.label(class="form-label fw-bold") }}
+                                {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.username.label(class="form-label fw-bold") }}
+                                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Choose a unique username</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.email.label(class="form-label fw-bold") }}
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.phone_number.label(class="form-label fw-bold") }}
+                                {{ form.phone_number(class="form-control" + (" is-invalid" if form.phone_number.errors else ""), placeholder="0712345678") }}
+                                {% if form.phone_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.role.label(class="form-label fw-bold") }}
+                                {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                                {% if form.role.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.role.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3 text-primary">
+                            <i class="fas fa-map-marker-alt me-2"></i>Location Information
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.county.label(class="form-label fw-bold") }}
+                                {{ form.county(class="form-select" + (" is-invalid" if form.county.errors else "")) }}
+                                {% if form.county.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.county.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.subcounty.label(class="form-label fw-bold") }}
+                                {{ form.subcounty(class="form-control" + (" is-invalid" if form.subcounty.errors else "")) }}
+                                {% if form.subcounty.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.subcounty.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.ward.label(class="form-label fw-bold") }}
+                                {{ form.ward(class="form-control" + (" is-invalid" if form.ward.errors else "")) }}
+                                {% if form.ward.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.ward.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.facility_name.label(class="form-label fw-bold") }}
+                                {{ form.facility_name(class="form-control" + (" is-invalid" if form.facility_name.errors else ""), placeholder="e.g. Kiambu District Hospital") }}
+                                {% if form.facility_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.facility_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Health facility where you work</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.license_number.label(class="form-label fw-bold") }}
+                                {{ form.license_number(class="form-control" + (" is-invalid" if form.license_number.errors else ""), placeholder="For doctors/clinicians") }}
+                                {% if form.license_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.license_number.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Professional license number (if applicable)</div>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3 text-primary">
+                            <i class="fas fa-lock me-2"></i>Security Information
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.password.label(class="form-label fw-bold") }}
+                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Minimum 6 characters</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.password2.label(class="form-label fw-bold") }}
+                                {{ form.password2(class="form-control" + (" is-invalid" if form.password2.errors else "")) }}
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Register Account
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <p class="text-muted">
+                                Already have an account? 
+                                <a href="{{ url_for('login') }}" class="text-decoration-none">Login here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

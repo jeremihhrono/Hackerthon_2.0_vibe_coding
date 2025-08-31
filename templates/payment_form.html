@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Process Payment - Community Health System{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-warning text-dark border-0">
+                <div class="card-body">
+                    <h3 class="mb-1">
+                        <i class="fas fa-credit-card me-2"></i>Process Payment
+                    </h3>
+                    <p class="mb-0">Secure payment processing through IntaSend M-Pesa integration</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-mobile-alt me-2 text-success"></i>Payment Details
+                        {% if patient %}
+                        <span class="text-muted">- {{ patient.get_full_name() }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if patient %}
+                    <div class="alert alert-info mb-4">
+                        <h6><i class="fas fa-user me-2"></i>Patient Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Name:</strong> {{ patient.get_full_name() }}<br>
+                                <strong>Patient Number:</strong> {{ patient.patient_number }}
+                            </div>
+                            <div class="col-md-6">
+                                {% if patient.phone_number %}
+                                <strong>Phone:</strong> {{ patient.phone_number }}<br>
+                                {% endif %}
+                                {% if patient.nhif_number %}
+                                <strong>NHIF:</strong> {{ patient.nhif_number }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" id="paymentForm" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.amount.label(class="form-label fw-bold") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">KES</span>
+                                    {{ form.amount(class="form-control form-control-lg" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00") }}
+                                    {% if form.amount.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.payment_type.label(class="form-label fw-bold") }}
+                                {{ form.payment_type(class="form-select form-select-lg" + (" is-invalid" if form.payment_type.errors else "")) }}
+                                {% if form.payment_type.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.payment_type.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.description.label(class="form-label fw-bold") }}
+                                {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="2", placeholder="Brief description of the payment...") }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="text-success mb-3 mt-4">
+                            <i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment Details
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.phone_number.label(class="form-label fw-bold") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-mobile-alt text-success"></i>
+                                    </span>
+                                    {{ form.phone_number(class="form-control form-control-lg" + (" is-invalid" if form.phone_number.errors else ""), placeholder="0712345678", value=patient.phone_number if patient else "") }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Enter the Safaricom number to receive the M-Pesa prompt
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Summary -->
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3">Payment Summary</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div id="summaryType" class="mb-2">
+                                            <strong>Type:</strong> <span class="text-muted">Select payment type</span>
+                                        </div>
+                                        <div id="summaryDescription" class="mb-2">
+                                            <strong>Description:</strong> <span class="text-muted">Enter description</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div id="summaryAmount" class="mb-2">
+                                            <strong>Amount:</strong> <span class="text-success fw-bold">KES 0.00</span>
+                                        </div>
+                                        <div id="summaryPhone" class="mb-2">
+                                            <strong>Phone:</strong> <span class="text-muted">Enter phone number</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- IntaSend Integration Notice -->
+                        <div class="alert alert-warning mb-4">
+                            <h6><i class="fas fa-shield-alt me-2"></i>Secure Payment Processing</h6>
+                            <ul class="mb-0">
+                                <li>Payments are processed securely through IntaSend</li>
+                                <li>You will receive an M-Pesa prompt on your phone</li>
+                                <li>Enter your M-Pesa PIN to complete the payment</li>
+                                <li>You will receive an SMS confirmation upon successful payment</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('payments') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg" id="processPaymentBtn">
+                                <i class="fas fa-credit-card me-2"></i>Process Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Methods Info -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Payment Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-success">Supported Payment Methods</h6>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fab fa-mpesa fa-2x text-success"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1">M-Pesa</h6>
+                            <small class="text-muted">Safaricom M-Pesa payments</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-credit-card fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1">Bank Cards</h6>
+                            <small class="text-muted">Visa, Mastercard</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-university fa-2x text-info"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1">Bank Transfer</h6>
+                            <small class="text-muted">Direct bank payments</small>
+                        </div>
+                    </div>
+
+                    <h6 class="text-success">Security Features</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>SSL Encryption</li>
+                        <li><i class="fas fa-check text-success me-2"></i>PCI DSS Compliant</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Secure Authentication</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Real-time Processing</li>
+                    </ul>
+
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            Powered by 
+                            <strong class="text-success">IntaSend</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/payments.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation and live updates
+    const form = document.getElementById('paymentForm');
+    const amountInput = form.querySelector('input[name="amount"]');
+    const typeSelect = form.querySelector('select[name="payment_type"]');
+    const descriptionInput = form.querySelector('textarea[name="description"]');
+    const phoneInput = form.querySelector('input[name="phone_number"]');
+
+    // Update summary in real-time
+    function updateSummary() {
+        const amount = amountInput.value || '0';
+        const type = typeSelect.options[typeSelect.selectedIndex].text;
+        const description = descriptionInput.value || 'Enter description';
+        const phone = phoneInput.value || 'Enter phone number';
+
+        document.getElementById('summaryAmount').innerHTML = 
+            '<strong>Amount:</strong> <span class="text-success fw-bold">KES ' + parseFloat(amount).toLocaleString('en-KE', {minimumFractionDigits: 2}) + '</span>';
+        
+        document.getElementById('summaryType').innerHTML = 
+            '<strong>Type:</strong> <span class="text-info">' + type + '</span>';
+        
+        document.getElementById('summaryDescription').innerHTML = 
+            '<strong>Description:</strong> <span class="text-muted">' + description.substring(0, 50) + (description.length > 50 ? '...' : '') + '</span>';
+        
+        document.getElementById('summaryPhone').innerHTML = 
+            '<strong>Phone:</strong> <span class="text-primary">' + phone + '</span>';
+    }
+
+    // Add event listeners
+    amountInput.addEventListener('input', updateSummary);
+    typeSelect.addEventListener('change', updateSummary);
+    descriptionInput.addEventListener('input', updateSummary);
+    phoneInput.addEventListener('input', updateSummary);
+
+    // Phone number formatting
+    phoneInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        
+        if (value.startsWith('254')) {
+            value = '+' + value;
+        } else if (value.startsWith('0')) {
+            value = '+254' + value.substring(1);
+        } else if (value.length === 9) {
+            value = '+254' + value;
+        }
+        
+        this.value = value;
+        updateSummary();
+    });
+
+    // Initial summary update
+    updateSummary();
+
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('processPaymentBtn');
+        
+        // Disable button and show loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        // Enable button after 30 seconds in case of timeout
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Process Payment';
+        }, 30000);
+    });
+
+    // Quick amount buttons
+    const quickAmounts = [100, 500, 1000, 2000, 5000];
+    const amountGroup = amountInput.parentNode.parentNode;
+    
+    const quickButtonsDiv = document.createElement('div');
+    quickButtonsDiv.className = 'mt-2';
+    quickButtonsDiv.innerHTML = '<small class="text-muted">Quick amounts:</small><br>';
+    
+    quickAmounts.forEach(amount => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-outline-secondary btn-sm me-1 mt-1';
+        btn.textContent = 'KES ' + amount.toLocaleString();
+        btn.onclick = () => {
+            amountInput.value = amount;
+            updateSummary();
+        };
+        quickButtonsDiv.appendChild(btn);
+    });
+    
+    amountGroup.appendChild(quickButtonsDiv);
+});
+</script>
+{% endblock %}

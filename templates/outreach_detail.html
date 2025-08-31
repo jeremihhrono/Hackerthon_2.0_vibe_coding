@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if event %}{{ event.title }} - Outreach Event{% else %}New Outreach Event{% endif %} - Community Health System
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    {% if event %}
+    <!-- Event Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="bg-{{ 'success' if event.event_type == 'vaccination' else 'primary' if event.event_type == 'screening' else 'info' }} text-white rounded-circle p-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-{{ 'syringe' if event.event_type == 'vaccination' else 'stethoscope' if event.event_type == 'screening' else 'graduation-cap' if event.event_type == 'education' else 'heartbeat' }} fa-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h3 class="mb-1">{{ event.title }}</h3>
+                                    <p class="text-muted mb-2">{{ event.description or 'No description provided' }}</p>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-{{ 'success' if event.event_type == 'vaccination' else 'primary' if event.event_type == 'screening' else 'info' }}">
+                                            {{ event.event_type.replace('_', ' ').title() }}
+                                        </span>
+                                        <span class="badge bg-{{ 'success' if event.status == 'completed' else 'warning' if event.status == 'ongoing' else 'secondary' if event.status == 'planned' else 'danger' }}">
+                                            {{ event.status.title() }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            {% if current_user.role == 'admin' or event.organizer_id == current_user.id %}
+                            <a href="#" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-edit me-1"></i>Edit Event
+                            </a>
+                            {% endif %}
+                            {% if event.status == 'planned' %}
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#attendanceModal">
+                                <i class="fas fa-user-plus me-1"></i>Record Attendance
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details and Attendance -->
+    <div class="row">
+        <!-- Event Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Event Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Date & Time</small>
+                        <div class="fw-bold">
+                            <i class="fas fa-calendar me-2"></i>
+                            {{ event.start_date.strftime('%d %B %Y') }}
+                        </div>
+                        <div class="text-muted">
+                            <i class="fas fa-clock me-2"></i>
+                            {{ event.start_date.strftime('%I:%M %p') }} - {{ event.end_date.strftime('%I:%M %p') }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Location</small>
+                        <div class="fw-bold">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            {{ event.location }}
+                        </div>
+                        {% if event.target_county %}
+                        <div class="text-muted">
+                            {{ event.target_county.title() }}
+                            {% if event.target_subcounty %}, {{ event.target_subcounty }}{% endif %}
+                            {% if event.target_ward %}, {{ event.target_ward }}{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Organizer</small>
+                        <div class="fw-bold">
+                            <i class="fas fa-user me-2"></i>
+                            {{ event.organizer.get_full_name() }}
+                        </div>
+                        <div class="text-muted">{{ event.organizer.role.title() }}</div>
+                    </div>
+                    
+                    {% if event.max_participants %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Capacity</small>
+                        <div class="fw-bold">
+                            <i class="fas fa-users me-2"></i>
+                            {{ event.get_attendance_count() }}/{{ event.max_participants }} participants
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            {% set attendance_percentage = (event.get_attendance_count() / event.max_participants * 100) if event.max_participants else 0 %}
+                            <div class="progress-bar bg-{{ 'success' if attendance_percentage >= 100 else 'warning' if attendance_percentage >= 80 else 'info' }}" 
+                                 style="width: {{ min(attendance_percentage, 100) }}%"></div>
+                        </div>
+                        {% if event.is_full() %}
+                        <small class="text-success fw-bold">Event is full</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Target Demographics -->
+                    {% if event.target_age_min or event.target_age_max or event.target_gender != 'all' %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Target Group</small>
+                        <div class="fw-bold">
+                            <i class="fas fa-bullseye me-2"></i>
+                            {% if event.target_gender != 'all' %}{{ event.target_gender.title() }}{% endif %}
+                            {% if event.target_age_min or event.target_age_max %}
+                                Age: 
+                                {% if event.target_age_min %}{{ event.target_age_min }}+{% endif %}
+                                {% if event.target_age_min and event.target_age_max %} - {% endif %}
+                                {% if event.target_age_max %}{{ event.target_age_max }}{% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance List -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Attendance Record
+                        <span class="badge bg-primary ms-2">{{ attendances|length }}</span>
+                    </h6>
+                    {% if event.status == 'planned' %}
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#attendanceModal">
+                        <i class="fas fa-plus me-1"></i>Add Participant
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if attendances %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Demographics</th>
+                                    <th>Services</th>
+                                    <th>Recorded By</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in attendances %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                     style="width: 35px; height: 35px;">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-2">
+                                                <div class="fw-bold">{{ attendance.patient.get_full_name() }}</div>
+                                                <small class="text-muted">{{ attendance.patient.patient_number }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if attendance.patient.gender == 'male' else 'pink' if attendance.patient.gender == 'female' else 'secondary' }}">
+                                            {{ attendance.patient.gender.title() }}
+                                        </span>
+                                        <br><small class="text-muted">{{ attendance.patient.get_age() }} years</small>
+                                    </td>
+                                    <td>
+                                        {% if attendance.services_received %}
+                                        <small>{{ attendance.services_received }}</small>
+                                        {% else %}
+                                        <small class="text-muted">No services recorded</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {% if attendance.recorded_by_id %}
+                                                CHW Staff
+                                            {% else %}
+                                                System
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ attendance.attendance_date.strftime('%I:%M %p') }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No attendance recorded</h5>
+                        <p class="text-muted">Start recording patient attendance for this event.</p>
+                        {% if event.status == 'planned' %}
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#attendanceModal">
+                            <i class="fas fa-user-plus me-2"></i>Record First Participant
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- New Event Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>Plan New Outreach Event
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if form %}
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                {{ form.title.label(class="form-label fw-bold") }}
+                                {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.title.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.event_type.label(class="form-label fw-bold") }}
+                                {{ form.event_type(class="form-select" + (" is-invalid" if form.event_type.errors else "")) }}
+                                {% if form.event_type.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.event_type.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.description.label(class="form-label fw-bold") }}
+                                {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3") }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="text-success mb-3 mt-4">
+                            <i class="fas fa-calendar-alt me-2"></i>Schedule & Location
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                {{ form.start_date.label(class="form-label fw-bold") }}
+                                {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.start_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                {{ form.end_date.label(class="form-label fw-bold") }}
+                                {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else "")) }}
+                                {% if form.end_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.end_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.location.label(class="form-label fw-bold") }}
+                                {{ form.location(class="form-control" + (" is-invalid" if form.location.errors else ""), placeholder="e.g., Kiambu Community Center") }}
+                                {% if form.location.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.location.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="text-success mb-3 mt-4">
+                            <i class="fas fa-bullseye me-2"></i>Target Demographics
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.target_county.label(class="form-label fw-bold") }}
+                                {{ form.target_county(class="form-select" + (" is-invalid" if form.target_county.errors else "")) }}
+                                {% if form.target_county.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.target_county.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.target_subcounty.label(class="form-label fw-bold") }}
+                                {{ form.target_subcounty(class="form-control" + (" is-invalid" if form.target_subcounty.errors else "")) }}
+                                {% if form.target_subcounty.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.target_subcounty.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                {{ form.target_ward.label(class="form-label fw-bold") }}
+                                {{ form.target_ward(class="form-control" + (" is-invalid" if form.target_ward.errors else "")) }}
+                                {% if form.target_ward.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.target_ward.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                {{ form.max_participants.label(class="form-label fw-bold") }}
+                                {{ form.max_participants(class="form-control" + (" is-invalid" if form.max_participants.errors else ""), placeholder="100") }}
+                                {% if form.max_participants.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.max_participants.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                {{ form.target_age_min.label(class="form-label fw-bold") }}
+                                {{ form.target_age_min(class="form-control" + (" is-invalid" if form.target_age_min.errors else ""), placeholder="0") }}
+                                {% if form.target_age_min.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.target_age_min.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                {{ form.target_age_max.label(class="form-label fw-bold") }}
+                                {{ form.target_age_max(class="form-control" + (" is-invalid" if form.target_age_max.errors else ""), placeholder="120") }}
+                                {% if form.target_age_max.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.target_age_max.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                {{ form.target_gender.label(class="form-label fw-bold") }}
+                                {{ form.target_gender(class="form-select" + (" is-invalid" if form.target_gender.errors else "")) }}
+                                {% if form.target_gender.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.target_gender.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>Create Event
+                            </button>
+                            <a href="{{ url_for('outreach') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Attendance Modal -->
+{% if event and event.status == 'planned' %}
+<div class="modal fade" id="attendanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Patient Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('record_attendance', id=event.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Search Patient</label>
+                        <input type="text" class="form-control" id="patientSearch" placeholder="Type patient name or number...">
+                        <div id="patientSuggestions" class="list-group mt-2" style="display: none;"></div>
+                        <input type="hidden" name="patient_id" id="selectedPatientId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Services Received</label>
+                        <textarea class="form-control" name="services" rows="2" placeholder="e.g., Vaccination, Health screening..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Record Attendance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Patient search functionality
+{% if event %}
+document.getElementById('patientSearch').addEventListener('input', function() {
+    const query = this.value.trim();
+    if (query.length >= 2) {
+        fetch(`{{ url_for('api_patients_search') }}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(patients => {
+                const suggestions = document.getElementById('patientSuggestions');
+                suggestions.innerHTML = '';
+                
+                if (patients.length > 0) {
+                    patients.forEach(patient => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="mb-1">${patient.name}</h6>
+                                    <small>${patient.patient_number} - Age: ${patient.age}</small>
+                                </div>
+                            </div>
+                        `;
+                        item.onclick = function() {
+                            document.getElementById('patientSearch').value = patient.name;
+                            document.getElementById('selectedPatientId').value = patient.id;
+                            suggestions.style.display = 'none';
+                        };
+                        suggestions.appendChild(item);
+                    });
+                    suggestions.style.display = 'block';
+                } else {
+                    suggestions.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error searching patients:', error);
+            });
+    } else {
+        document.getElementById('patientSuggestions').style.display = 'none';
+    }
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('#patientSearch') && !event.target.closest('#patientSuggestions')) {
+        document.getElementById('patientSuggestions').style.display = 'none';
+    }
+});
+{% endif %}
+
+// Date validation for event planning
+const startDateInput = document.querySelector('input[name="start_date"]');
+const endDateInput = document.querySelector('input[name="end_date"]');
+
+if (startDateInput && endDateInput) {
+    startDateInput.addEventListener('change', function() {
+        endDateInput.min = this.value;
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = this.value;
+        }
+    });
+}
+</script>
+{% endblock %}

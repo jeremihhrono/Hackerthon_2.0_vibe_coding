@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Community Health System
+                    <span class="text-warning">Kenya</span>
+                </h1>
+                <p class="lead mb-4">
+                    Empowering community health workers, improving patient care, and strengthening healthcare delivery across Kenya.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('register') }}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Get Started
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-heartbeat" style="font-size: 12rem; opacity: 0.1;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-lg-12 text-center mb-4">
+            <h2 class="fw-bold">Comprehensive Healthcare Management</h2>
+            <p class="text-muted">Supporting Kenya's health system with digital solutions</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-primary text-white rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Patient Management</h5>
+                    <p class="card-text text-muted">
+                        FHIR-compliant patient records, health tracking, and comprehensive care coordination.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-success text-white rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-calendar-alt fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Outreach Planning</h5>
+                    <p class="card-text text-muted">
+                        Schedule and manage community health events, vaccination campaigns, and health screenings.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-warning text-white rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-money-bill-wave fa-lg"></i>
+                    </div>
+                    <h5 class="card-title">Payment Integration</h5>
+                    <p class="card-text text-muted">
+                        Secure payments through IntaSend - patient fees, CHW allowances, and NHIF integration.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role-based Access -->
+    <div class="row mb-5">
+        <div class="col-lg-12">
+            <h3 class="text-center mb-4">Role-Based Access Control</h3>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-user-md me-2"></i>Healthcare Administrators</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>System management</li>
+                                <li><i class="fas fa-check text-success me-2"></i>User management</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Analytics & reporting</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Payment oversight</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="fas fa-stethoscope me-2"></i>Doctors & Clinicians</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>Patient consultations</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Health records</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Treatment planning</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Referral management</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-white">
+                            <h6 class="mb-0"><i class="fas fa-hands-helping me-2"></i>Community Health Workers</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><i class="fas fa-check text-success me-2"></i>Patient registration</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Health screening</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Outreach coordination</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Community engagement</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kenyan Context -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card bg-light border-0">
+                <div class="card-body p-5">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="fw-bold text-primary mb-3">Built for Kenya's Healthcare System</h4>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-map-marker-alt text-primary me-3"></i>All 47 counties supported</li>
+                                <li class="mb-2"><i class="fas fa-mobile-alt text-primary me-3"></i>M-Pesa and mobile payments</li>
+                                <li class="mb-2"><i class="fas fa-shield-alt text-primary me-3"></i>NHIF integration ready</li>
+                                <li class="mb-2"><i class="fas fa-language text-primary me-3"></i>Kiswahili and English support</li>
+                                <li class="mb-2"><i class="fas fa-network-wired text-primary me-3"></i>Works offline and low-bandwidth</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-flag text-success" style="font-size: 4rem;"></i>
+                            <p class="mt-2 text-muted">Proudly Kenyan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
